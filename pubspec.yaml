@@ -1,0 +1,25 @@
+name: spoolscan
+description: NFC Spool Scanner for Snapmaker U1 + Spoolman
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  nfc_manager: ^3.3.0
+  http: ^1.2.0
+  shared_preferences: ^2.2.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  mockito: ^5.4.4
+  build_runner: ^2.4.8
+
+flutter:
+  uses-material-design: true
