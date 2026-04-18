@@ -39,6 +39,37 @@ class AppLocalizations {
   String get confirmError => _de ? 'Fehler' : 'Error';
   String get confirmSpoolmanUpdated => _de ? 'Spoolman aktualisiert ✓' : 'Spoolman updated ✓';
   String get confirmNextSpool => _de ? 'Nächste Spule' : 'Next spool';
+
+  // DetailScreen Erweiterung
+  String get detailRemaining => _de ? 'Restmenge' : 'Remaining';
+  String detailGrams(int g) => _de ? '$g g' : '$g g';
+
+  // NewSpoolConfirmScreen
+  String get confirmNewSpoolTitle => _de ? 'Neue Spule anlegen?' : 'Create new spool?';
+  String get confirmNewSpoolHint =>
+      _de ? 'Diese Spule ist Spoolman noch nicht bekannt.' : 'This spool is not yet known to Spoolman.';
+  String get confirmNewSpoolCreate => _de ? 'Anlegen & Weiter' : 'Create & continue';
+  String get confirmCancel => _de ? 'Abbrechen' : 'Cancel';
+  String get confirmCreating => _de ? 'Lege an...' : 'Creating...';
+  String createError(String e) => _de ? 'Anlage-Fehler: $e' : 'Create error: $e';
+
+  // NewSpoolFormScreen
+  String get formTitle => _de ? 'Neue Spule eingeben' : 'Enter new spool';
+  String get formBrand => _de ? 'Marke' : 'Brand';
+  String get formMaterial => _de ? 'Material' : 'Material';
+  String get formColor => _de ? 'Farbe (Hex, ohne #)' : 'Color (hex, no #)';
+  String get formWeight => _de ? 'Gewicht (g)' : 'Weight (g)';
+  String get formTemp => _de ? 'Drucktemperatur (°C)' : 'Print temperature (°C)';
+  String get formNew => _de ? 'Neu...' : 'New...';
+  String get formSave => _de ? 'Speichern & Weiter' : 'Save & continue';
+  String get formRequired => _de ? 'Pflichtfeld' : 'Required';
+  String get formInvalidHex => _de ? 'Ungültige Hex-Farbe (6 Zeichen)' : 'Invalid hex color (6 chars)';
+
+  // Resolver Status (optional anzeigen)
+  String get statusLookingUp => _de ? 'Suche in Spoolman...' : 'Looking up in Spoolman...';
+  String get statusFoundById => _de ? 'Spule gefunden (ID)' : 'Spool found (by ID)';
+  String get statusFoundByUid => _de ? 'Spule gefunden (NFC)' : 'Spool found (by NFC)';
+  String get statusNotFound => _de ? 'Unbekannte Spule' : 'Unknown spool';
 }
 
 class _AppLocalizationsDelegate
