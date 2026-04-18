@@ -65,7 +65,17 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
         _scanning = true;
         _errorMessage = null;
       });
-      NfcManager.instance.startSession(onDiscovered: _onTagDiscovered);
+      // Explizite Polling-Optionen für ALLE Tag-Technologien:
+      // verhindert dass Samsung-Geräte bei z.B. unformatierten NTAGs
+      // konkurrierend die System-Tags-App aufrufen.
+      NfcManager.instance.startSession(
+        onDiscovered: _onTagDiscovered,
+        pollingOptions: const {
+          NfcPollingOption.iso14443,
+          NfcPollingOption.iso15693,
+          NfcPollingOption.iso18092,
+        },
+      );
     } finally {
       _isStarting = false;
     }
@@ -92,13 +102,20 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
         String textPayload = '';
         final ndef = Ndef.from(tag);
         if (ndef != null) {
-          final message = await ndef.read();
-          for (final record in message.records) {
-            if (_isTextRecord(record)) {
-              final langLen = record.payload[0] & 0x3F;
-              textPayload = utf8.decode(record.payload.sublist(langLen + 1));
-              break;
+          // ndef.read() darf scheitern (leerer/unformatierter Tag).
+          // Dann bleibt textPayload leer → führt in den Anlage-Flow,
+          // statt einen User-sichtbaren Fehler zu zeigen.
+          try {
+            final message = await ndef.read();
+            for (final record in message.records) {
+              if (_isTextRecord(record)) {
+                final langLen = record.payload[0] & 0x3F;
+                textPayload = utf8.decode(record.payload.sublist(langLen + 1));
+                break;
+              }
             }
+          } catch (_) {
+            // textPayload bleibt '' → TagReader.parse liefert TagFormat.unknown
           }
         }
 

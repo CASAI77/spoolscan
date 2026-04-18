@@ -28,15 +28,10 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-            <intent-filter>
-                <action android:name="android.nfc.action.NDEF_DISCOVERED"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <data android:mimeType="text/plain"/>
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.nfc.action.TAG_DISCOVERED"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-            </intent-filter>
+            <!-- NFC Intent-Filter bewusst entfernt: Die App nutzt ausschließlich
+                 Reader Mode (NfcManager.startSession). System-Intent-Dispatch
+                 wäre konkurrierend und führt auf Samsung-Geräten zum Auslösen
+                 der Samsung-Tags-App bei leeren NDEF-Tags. -->
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
