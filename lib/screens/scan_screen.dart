@@ -117,8 +117,9 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
           resultSpool = res.spool;
         } else {
           // 4. Anlage-Flow
+          // Reader Mode aktiv lassen, damit Android nicht den Tag selbst dispatcht
+          // (genau wie im Match-Pfad). Die finally-Klausel unten stoppt die Session.
           final creator = SpoolCreator(spoolman: spoolman, baseUrl: spoolmanUrl);
-          await NfcManager.instance.stopSession();
 
           if (creator.canAutoCreate(tagResult)) {
             resultSpool = await _showAutoConfirm(tagResult, creator);
