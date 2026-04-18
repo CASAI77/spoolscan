@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:spoolscan/models/spool.dart';
+import 'package:spoolscan/models/tag_format.dart';
 
 void main() {
   group('Spool.fromJson', () {
@@ -55,6 +56,30 @@ void main() {
       final spool = Spool.fromJson(json);
       expect(spool.brand, isNull);
       expect(spool.colorHex, isNull);
+    });
+  });
+
+  group('Spool – neue Felder', () {
+    test('Konstruktor akzeptiert nfcUid, tagFormat, remainingWeight, weightTotal', () {
+      final spool = Spool(
+        spoolId: '7',
+        nfcUid: '04a3b21c5d6e80',
+        tagFormat: TagFormat.openPrintTag,
+        remainingWeight: 743,
+        weightTotal: 1000,
+      );
+      expect(spool.nfcUid, '04a3b21c5d6e80');
+      expect(spool.tagFormat, TagFormat.openPrintTag);
+      expect(spool.remainingWeight, 743);
+      expect(spool.weightTotal, 1000);
+    });
+
+    test('neue Felder sind optional und null als Default', () {
+      final spool = Spool(spoolId: '1');
+      expect(spool.nfcUid, isNull);
+      expect(spool.tagFormat, isNull);
+      expect(spool.remainingWeight, isNull);
+      expect(spool.weightTotal, isNull);
     });
   });
 }

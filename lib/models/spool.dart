@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'tag_format.dart';
 
 class Spool {
   final String spoolId;
@@ -7,6 +8,10 @@ class Spool {
   final String? colorHex;
   final int? minTemp;
   final int? maxTemp;
+  final String? nfcUid;
+  final TagFormat? tagFormat;
+  final int? remainingWeight;
+  final int? weightTotal;
 
   Spool({
     required this.spoolId,
@@ -15,21 +20,46 @@ class Spool {
     this.colorHex,
     this.minTemp,
     this.maxTemp,
+    this.nfcUid,
+    this.tagFormat,
+    this.remainingWeight,
+    this.weightTotal,
   });
 
-  /// Parst automatisch OpenSpool-JSON oder SpoolCompanion-Textformat
+  Spool copyWith({
+    String? spoolId,
+    String? brand,
+    String? type,
+    String? colorHex,
+    int? minTemp,
+    int? maxTemp,
+    String? nfcUid,
+    TagFormat? tagFormat,
+    int? remainingWeight,
+    int? weightTotal,
+  }) =>
+      Spool(
+        spoolId: spoolId ?? this.spoolId,
+        brand: brand ?? this.brand,
+        type: type ?? this.type,
+        colorHex: colorHex ?? this.colorHex,
+        minTemp: minTemp ?? this.minTemp,
+        maxTemp: maxTemp ?? this.maxTemp,
+        nfcUid: nfcUid ?? this.nfcUid,
+        tagFormat: tagFormat ?? this.tagFormat,
+        remainingWeight: remainingWeight ?? this.remainingWeight,
+        weightTotal: weightTotal ?? this.weightTotal,
+      );
+
+  // === bestehende Factory-Methoden bleiben unverändert ===
   factory Spool.fromText(String text) {
     final trimmed = text.trim();
-
-    // Versuche OpenSpool JSON
     if (trimmed.startsWith('{')) {
       try {
         final json = jsonDecode(trimmed) as Map<String, dynamic>;
         return Spool.fromJson(json);
       } catch (_) {}
     }
-
-    // SpoolCompanion-Format: SPOOL:3\nFILAMENT:8\n...
     return Spool._fromSpoolCompanion(trimmed);
   }
 
@@ -38,9 +68,7 @@ class Spool {
       throw FormatException('Kein OpenSpool-Format (protocol=${json['protocol']})');
     }
     final rawId = json['spool_id'];
-    if (rawId == null) {
-      throw FormatException('spool_id fehlt im Tag');
-    }
+    if (rawId == null) throw FormatException('spool_id fehlt im Tag');
     return Spool(
       spoolId: rawId.toString(),
       brand: json['brand'] as String?,
@@ -48,30 +76,24 @@ class Spool {
       colorHex: json['color_hex'] as String?,
       minTemp: json['min_temp'] as int?,
       maxTemp: json['max_temp'] as int?,
+      tagFormat: TagFormat.openSpool,
     );
   }
 
   factory Spool._fromSpoolCompanion(String text) {
     String? spoolId;
     String? material;
-
     for (final line in text.split('\n')) {
       final parts = line.split(':');
       if (parts.length < 2) continue;
       final key = parts[0].trim().toUpperCase();
       final value = parts.sublist(1).join(':').trim();
-
       if (key == 'SPOOL') spoolId = value;
       if (key == 'MATERIAL' || key == 'TYPE') material = value;
     }
-
     if (spoolId == null) {
       throw FormatException('Kein SPOOL:-Feld gefunden – unbekanntes Tag-Format');
     }
-
-    return Spool(
-      spoolId: spoolId,
-      type: material,
-    );
+    return Spool(spoolId: spoolId, type: material, tagFormat: TagFormat.spoolCompanion);
   }
 }

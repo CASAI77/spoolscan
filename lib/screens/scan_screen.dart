@@ -1,10 +1,18 @@
 import 'dart:async' show unawaited;
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:nfc_manager/nfc_manager.dart';
 import '../l10n/app_localizations.dart';
 import '../models/spool.dart';
+import '../services/settings_service.dart';
+import '../services/spoolman_service.dart';
+import '../services/spool_resolver.dart';
+import '../services/spool_creator.dart';
+import '../services/tag_reader.dart';
 import 'detail_screen.dart';
+import 'new_spool_confirm_screen.dart';
+import 'new_spool_form_screen.dart';
 
 class ScanScreen extends StatefulWidget {
   const ScanScreen({super.key});
@@ -57,7 +65,17 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
         _scanning = true;
         _errorMessage = null;
       });
-      NfcManager.instance.startSession(onDiscovered: _onTagDiscovered);
+      // Explizite Polling-Optionen für ALLE Tag-Technologien:
+      // verhindert dass Samsung-Geräte bei z.B. unformatierten NTAGs
+      // konkurrierend die System-Tags-App aufrufen.
+      NfcManager.instance.startSession(
+        onDiscovered: _onTagDiscovered,
+        pollingOptions: const {
+          NfcPollingOption.iso14443,
+          NfcPollingOption.iso15693,
+          NfcPollingOption.iso18092,
+        },
+      );
     } finally {
       _isStarting = false;
     }
@@ -68,58 +86,83 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
     _tagProcessing = true;
     setState(() => _scanning = false);
 
-    Spool? spool;
+    final l10n = AppLocalizations.of(context);
     String? errorMsg;
+    Spool? resultSpool;
 
     try {
-      final ndef = Ndef.from(tag);
-      final l10n = AppLocalizations.of(context);
-      if (ndef == null) {
-        errorMsg = l10n.errorNoNdef;
+      // 1. UID + Text-Payload aus dem Tag ziehen
+      final nfcaData = tag.data['nfca'] as Map<dynamic, dynamic>?;
+      final ndefData = tag.data['ndef'] as Map<dynamic, dynamic>?;
+      final uidBytes = (nfcaData?['identifier'] ?? ndefData?['identifier']) as Uint8List?;
+      if (uidBytes == null) {
+        errorMsg = 'NFC-UID nicht lesbar';
       } else {
-        final message = await ndef.read();
-        if (message.records.isEmpty) {
-          errorMsg = l10n.errorEmptyTag;
-        } else {
-          String? payload;
-          for (final record in message.records) {
-            if (_isTextRecord(record)) {
-              final langLen = record.payload[0] & 0x3F;
-              payload = utf8.decode(record.payload.sublist(langLen + 1));
-              break;
+        final nfcUid = TagReader.uidFromBytes(uidBytes);
+        String textPayload = '';
+        final ndef = Ndef.from(tag);
+        if (ndef != null) {
+          // ndef.read() darf scheitern (leerer/unformatierter Tag).
+          // Dann bleibt textPayload leer → führt in den Anlage-Flow,
+          // statt einen User-sichtbaren Fehler zu zeigen.
+          try {
+            final message = await ndef.read();
+            for (final record in message.records) {
+              if (_isTextRecord(record)) {
+                final langLen = record.payload[0] & 0x3F;
+                textPayload = utf8.decode(record.payload.sublist(langLen + 1));
+                break;
+              }
             }
+          } catch (_) {
+            // textPayload bleibt '' → TagReader.parse liefert TagFormat.unknown
           }
-          if (payload == null) {
-            errorMsg = l10n.errorNoTextRecord;
+        }
+
+        // 2. TagReader: Format + Spool-Vorschlag
+        final tagResult = TagReader.parse(nfcUid: nfcUid, textPayload: textPayload);
+
+        // 3. Resolver
+        final settings = SettingsService();
+        final spoolmanUrl = await settings.getSpoolmanUrl();
+        final spoolman = SpoolmanService();
+        final resolver = SpoolResolver(spoolman: spoolman, baseUrl: spoolmanUrl);
+        final res = await resolver.resolve(tagResult);
+
+        if (res.stage == ResolveStage.foundById ||
+            res.stage == ResolveStage.foundByUid) {
+          resultSpool = res.spool;
+        } else {
+          // 4. Anlage-Flow
+          // Reader Mode aktiv lassen, damit Android nicht den Tag selbst dispatcht
+          // (genau wie im Match-Pfad). Die finally-Klausel unten stoppt die Session.
+          final creator = SpoolCreator(spoolman: spoolman, baseUrl: spoolmanUrl);
+
+          if (creator.canAutoCreate(tagResult)) {
+            resultSpool = await _showAutoConfirm(tagResult, creator);
           } else {
-            spool = Spool.fromText(payload);
+            resultSpool = await _showManualForm(tagResult, creator, spoolmanUrl, spoolman);
           }
         }
       }
     } on FormatException catch (e) {
       errorMsg = e.message;
     } catch (e) {
-      errorMsg = AppLocalizations.of(context).scanError('$e');
+      errorMsg = l10n.scanError('$e');
     }
 
     if (errorMsg != null) {
-      // Error: stop session and show error message
       await NfcManager.instance.stopSession();
       _showError(errorMsg);
       _tagProcessing = false;
       return;
     }
 
-    // Success: navigate while keeping reader mode ACTIVE.
-    // Keeping the NFC session open during navigation prevents Android from
-    // re-activating its default dispatch (which fires a second NFC intent and
-    // disrupts the navigation). Any tag events during navigation are blocked
-    // by _tagProcessing = true.
     try {
-      if (spool != null && mounted) {
+      if (resultSpool != null && mounted) {
         await Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => DetailScreen(spool: spool!)),
+          MaterialPageRoute(builder: (_) => DetailScreen(spool: resultSpool!)),
         );
       }
     } finally {
@@ -127,6 +170,71 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
       _tagProcessing = false;
       if (mounted) _startSession();
     }
+  }
+
+  Future<Spool?> _showAutoConfirm(TagReadResult tag, SpoolCreator creator) async {
+    Spool? created;
+    await Navigator.push<void>(
+      context,
+      MaterialPageRoute(builder: (_) => NewSpoolConfirmScreen(
+        tag: tag,
+        onConfirm: () async {
+          try {
+            created = await creator.createAuto(tag);
+            if (mounted) Navigator.pop(context);
+          } catch (e) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(AppLocalizations.of(context).createError('$e'))),
+              );
+            }
+          }
+        },
+        onCancel: () => Navigator.pop(context),
+      )),
+    );
+    return created;
+  }
+
+  Future<Spool?> _showManualForm(
+    TagReadResult tag,
+    SpoolCreator creator,
+    String spoolmanUrl,
+    SpoolmanService spoolman,
+  ) async {
+    final vendors = await spoolman.listVendors(spoolmanUrl);
+    final filaments = await spoolman.listFilaments(spoolmanUrl);
+    final knownMaterials = filaments.map((f) => f.material).toSet().toList()..sort();
+
+    Spool? created;
+    if (!mounted) return null;
+    await Navigator.push<void>(
+      context,
+      MaterialPageRoute(builder: (_) => NewSpoolFormScreen(
+        nfcUid: tag.nfcUid,
+        knownVendors: vendors.map((v) => v.name).toList(),
+        knownMaterials: knownMaterials,
+        prefillBrand: tag.spool?.brand,
+        prefillMaterial: tag.spool?.type,
+        prefillColorHex: tag.spool?.colorHex,
+        prefillWeightTotal: tag.spool?.weightTotal,
+        prefillExtruderTemp: tag.spool?.minTemp,
+        onSave: (form) async {
+          try {
+            created = await creator.createManual(form);
+            if (mounted) Navigator.pop(context);
+          } catch (e) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(AppLocalizations.of(context).createError('$e'))),
+              );
+            }
+          }
+        },
+        onCancel: () => Navigator.pop(context),
+      )),
+    );
+    return created;
   }
 
   bool _isTextRecord(NdefRecord record) =>
