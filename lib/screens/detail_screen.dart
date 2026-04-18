@@ -159,6 +159,22 @@ class _DetailScreenState extends State<DetailScreen> {
                                           style: const TextStyle(
                                               color: Colors.white70),
                                         ),
+                                      if (spool.remainingWeight != null)
+                                        Row(
+                                          children: [
+                                            const Icon(Icons.scale,
+                                                size: 14,
+                                                color: Colors.white70),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              '${AppLocalizations.of(context).detailRemaining}: '
+                                              '${AppLocalizations.of(context).detailGrams(spool.remainingWeight!)}'
+                                              '${spool.weightTotal != null ? ' / ${AppLocalizations.of(context).detailGrams(spool.weightTotal!)}' : ''}',
+                                              style: const TextStyle(
+                                                  color: Colors.white70),
+                                            ),
+                                          ],
+                                        ),
                                       Text(
                                         'ID: ${spool.spoolId}',
                                         style: const TextStyle(
