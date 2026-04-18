@@ -101,6 +101,11 @@ class SpoolmanService {
     int? initialWeight,
     Map<String, String>? extra,
   }) async {
+    if (extra != null) {
+      for (final fieldName in extra.keys) {
+        await ensureExtraField(baseUrl, 'spool', fieldName);
+      }
+    }
     final uri = Uri.parse('http://${_clean(baseUrl)}/api/v1/spool');
     final body = <String, dynamic>{
       'filament_id': filamentId,
@@ -126,6 +131,9 @@ class SpoolmanService {
     String spoolId,
     Map<String, String> extra,
   ) async {
+    for (final fieldName in extra.keys) {
+      await ensureExtraField(baseUrl, 'spool', fieldName);
+    }
     final uri = Uri.parse('http://${_clean(baseUrl)}/api/v1/spool/$spoolId');
     final body = jsonEncode({
       'extra': extra.map((k, v) => MapEntry(k, jsonEncode(v))),
@@ -136,6 +144,40 @@ class SpoolmanService {
         .timeout(const Duration(seconds: 5));
     if (r.statusCode != 200) {
       throw SpoolmanException('patchSpoolExtra HTTP ${r.statusCode}: ${r.body}');
+    }
+  }
+
+  /// Cache der bereits registrierten Extra-Felder pro (baseUrl, entity, name).
+  /// Verhindert, dass wir bei jedem create/patch erneut anfragen.
+  static final Set<String> _registeredExtraFields = {};
+
+  /// Stellt sicher, dass das benannte Extra-Feld in Spoolman existiert.
+  /// Idempotent: Conflict (Feld existiert schon) wird stillschweigend toleriert.
+  Future<void> ensureExtraField(
+    String baseUrl,
+    String entity,
+    String name,
+  ) async {
+    final cacheKey = '${_clean(baseUrl)}|$entity|$name';
+    if (_registeredExtraFields.contains(cacheKey)) return;
+
+    final uri = Uri.parse('http://${_clean(baseUrl)}/api/v1/field/$entity/$name');
+    try {
+      final r = await client
+          .post(uri,
+              headers: {'Content-Type': 'application/json'},
+              body: jsonEncode({'name': name, 'field_type': 'text'}))
+          .timeout(const Duration(seconds: 5));
+      // 200/201 = neu angelegt; 409 = existiert bereits → beides okay
+      if (r.statusCode == 200 || r.statusCode == 201 || r.statusCode == 409) {
+        _registeredExtraFields.add(cacheKey);
+        return;
+      }
+      throw SpoolmanException('ensureExtraField HTTP ${r.statusCode}: ${r.body}');
+    } on SpoolmanException {
+      rethrow;
+    } catch (e) {
+      throw SpoolmanException('ensureExtraField Verbindungsfehler: $e');
     }
   }
 

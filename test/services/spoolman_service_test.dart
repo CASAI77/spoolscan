@@ -153,6 +153,13 @@ void main() {
     });
 
     test('POSTed JSON mit filament_id + extra und gibt Spool zurück', () async {
+      // ensureExtraField wird vor createSpool aufgerufen
+      when(mockClient.post(
+        Uri.parse('http://h:7912/api/v1/field/spool/nfc_uid'),
+        headers: anyNamed('headers'),
+        body: anyNamed('body'),
+      )).thenAnswer((_) async => http.Response('{"name":"nfc_uid"}', 201));
+
       when(mockClient.post(
         Uri.parse('http://h:7912/api/v1/spool'),
         headers: anyNamed('headers'),
@@ -185,6 +192,13 @@ void main() {
     });
 
     test('PATCH mit extra-Map', () async {
+      // ensureExtraField wird vor patchSpoolExtra aufgerufen
+      when(mockClient.post(
+        Uri.parse('http://h:7912/api/v1/field/spool/nfc_uid'),
+        headers: anyNamed('headers'),
+        body: anyNamed('body'),
+      )).thenAnswer((_) async => http.Response('{"name":"nfc_uid"}', 409));
+
       when(mockClient.patch(
         Uri.parse('http://h:7912/api/v1/spool/3'),
         headers: anyNamed('headers'),
