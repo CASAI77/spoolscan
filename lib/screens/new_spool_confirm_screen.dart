@@ -27,7 +27,8 @@ class _NewSpoolConfirmScreenState extends State<NewSpoolConfirmScreen> {
     final s = widget.tag.spool!;
     return Scaffold(
       appBar: AppBar(title: Text(l10n.confirmNewSpoolTitle)),
-      body: Padding(
+      body: SafeArea(
+        child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -67,6 +68,7 @@ class _NewSpoolConfirmScreenState extends State<NewSpoolConfirmScreen> {
             ]),
           ],
         ),
+      ),
       ),
     );
   }

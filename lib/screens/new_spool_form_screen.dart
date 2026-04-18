@@ -84,7 +84,8 @@ class _NewSpoolFormScreenState extends State<NewSpoolFormScreen> {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(l10n.formTitle)),
-      body: Padding(
+      body: SafeArea(
+        child: Padding(
         padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
@@ -140,6 +141,7 @@ class _NewSpoolFormScreenState extends State<NewSpoolFormScreen> {
               ]),
           ]),
         ),
+      ),
       ),
     );
   }
