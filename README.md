@@ -36,12 +36,47 @@ Open the app → tap the settings icon (top right):
 | Printer IP (Moonraker) | `192.168.1.179` |
 | Spoolman URL | `192.168.1.181:7912` |
 
+## Verbrauchstracking aktivieren (einmalig)
+
+Damit Spoolman den Filamentverbrauch automatisch von Moonraker erhält, muss
+am Snapmaker U1 in `~/printer_data/config/moonraker.conf` folgender Block stehen:
+
+```ini
+[spoolman]
+server: http://192.168.1.181:7912
+sync_rate: 5
+```
+
+(Spoolman-URL ggf. an deine Umgebung anpassen.)
+
+Danach Moonraker neu starten:
+
+```bash
+sudo systemctl restart moonraker
+```
+
+Die App setzt beim Slot-Tippen die "active spool" — Moonraker reduziert dann das
+`remaining_weight` in Spoolman, während gedruckt wird. Der DetailScreen zeigt
+die aktuelle Restmenge bei jedem Scan.
+
 ## Usage
 
 1. Open SpoolScan
 2. Hold your phone to a filament spool NFC tag
 3. The app shows brand, material, color and temperature from Spoolman
 4. Tap T0 / T1 / T2 / T3 to assign the spool to that slot
+
+## Automatische Spulen-Anlage
+
+Wird ein Tag gescannt, dessen Spule **noch nicht in Spoolman existiert**, legt
+SpoolScan sie automatisch an:
+
+- **OpenPrintTag/OpenSpool mit Daten:** Bestätigungsdialog mit Marke/Material/Farbe → "Anlegen & Weiter".
+- **SpoolCompanion oder leerer NTAG:** Eingabe-Maske mit Vorbefüllung (was vom Tag kam).
+
+Beim ersten Match einer SpoolCompanion-Spule wird die NFC-Hardware-UID
+nachträglich in Spoolman als `extra.nfc_uid` gespeichert. Beim nächsten Scan
+wird die Spule sofort über die UID gefunden — unabhängig vom Tag-Format.
 
 ## Tech Stack
 
@@ -64,6 +99,13 @@ FILAMENT:3
 ```json
 {"protocol":"openspool","spool_id":3,"brand":"Sunlu","type":"PETG","color_hex":"000000"}
 ```
+
+**OpenPrintTag (JSON):**
+```json
+{"standard":"openprinttag","brand":"Prusament","material":"PETG","color_hex":"1a1a1a","weight_total":1000,"weight_remaining":850,"print_temp":240}
+```
+
+Spec: <https://openprinttag.org/>
 
 ## Build from Source
 
