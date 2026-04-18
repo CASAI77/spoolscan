@@ -179,8 +179,16 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
       MaterialPageRoute(builder: (_) => NewSpoolConfirmScreen(
         tag: tag,
         onConfirm: () async {
-          created = await creator.createAuto(tag);
-          if (mounted) Navigator.pop(context);
+          try {
+            created = await creator.createAuto(tag);
+            if (mounted) Navigator.pop(context);
+          } catch (e) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(AppLocalizations.of(context).createError('$e'))),
+              );
+            }
+          }
         },
         onCancel: () => Navigator.pop(context),
       )),
@@ -212,8 +220,16 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
         prefillWeightTotal: tag.spool?.weightTotal,
         prefillExtruderTemp: tag.spool?.minTemp,
         onSave: (form) async {
-          created = await creator.createManual(form);
-          if (mounted) Navigator.pop(context);
+          try {
+            created = await creator.createManual(form);
+            if (mounted) Navigator.pop(context);
+          } catch (e) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(AppLocalizations.of(context).createError('$e'))),
+              );
+            }
+          }
         },
         onCancel: () => Navigator.pop(context),
       )),

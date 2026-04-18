@@ -70,6 +70,8 @@ void main() {
         material: 'PETG Schwarz',
         colorHex: '111111',
         extruderTemp: 240,
+        density: anyNamed('density'),
+        diameter: anyNamed('diameter'),
       )).thenAnswer((_) async => 20);
       when(spoolman.createSpool(
         baseUrl,
@@ -87,7 +89,9 @@ void main() {
               name: 'PETG Schwarz',
               material: 'PETG Schwarz',
               colorHex: '111111',
-              extruderTemp: 240))
+              extruderTemp: 240,
+              density: anyNamed('density'),
+              diameter: anyNamed('diameter')))
           .called(1);
     });
 
@@ -111,7 +115,9 @@ void main() {
               name: anyNamed('name'),
               material: anyNamed('material'),
               colorHex: anyNamed('colorHex'),
-              extruderTemp: anyNamed('extruderTemp')))
+              extruderTemp: anyNamed('extruderTemp'),
+              density: anyNamed('density'),
+              diameter: anyNamed('diameter')))
           .thenAnswer((_) async => 8);
       when(spoolman.createSpool(baseUrl,
               filamentId: 8,
@@ -159,7 +165,9 @@ void main() {
           name: anyNamed('name'),
           material: anyNamed('material'),
           colorHex: anyNamed('colorHex'),
-          extruderTemp: anyNamed('extruderTemp')));
+          extruderTemp: anyNamed('extruderTemp'),
+          density: anyNamed('density'),
+          diameter: anyNamed('diameter')));
     });
 
     test('createManual: nimmt Form-Daten und ruft die gleiche Pipeline auf', () async {
@@ -181,7 +189,9 @@ void main() {
               name: 'PETG',
               material: 'PETG',
               colorHex: '00ff00',
-              extruderTemp: 240))
+              extruderTemp: 240,
+              density: anyNamed('density'),
+              diameter: anyNamed('diameter')))
           .thenAnswer((_) async => 2);
       when(spoolman.createSpool(baseUrl,
               filamentId: 2,

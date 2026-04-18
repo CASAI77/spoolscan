@@ -88,6 +88,8 @@ class MockSpoolmanService extends _i1.Mock implements _i4.SpoolmanService {
     required String? material,
     required String? colorHex,
     int? extruderTemp,
+    double? diameter = 1.75,
+    double? density = 1.24,
   }) =>
       (super.noSuchMethod(
             Invocation.method(
@@ -99,6 +101,8 @@ class MockSpoolmanService extends _i1.Mock implements _i4.SpoolmanService {
                 #material: material,
                 #colorHex: colorHex,
                 #extruderTemp: extruderTemp,
+                #diameter: diameter,
+                #density: density,
               },
             ),
             returnValue: _i5.Future<int>.value(0),

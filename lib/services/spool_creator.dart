@@ -35,8 +35,21 @@ class SpoolCreator {
     'PA': 270,
   };
 
+  /// Standard-Dichten in g/cm³ (Basis: gängige Hersteller-Datenblätter).
+  static const Map<String, double> _defaultDensities = {
+    'PLA': 1.24,
+    'PETG': 1.27,
+    'ABS': 1.04,
+    'ASA': 1.07,
+    'TPU': 1.21,
+    'PA': 1.14,
+  };
+
   static int? defaultTempForMaterial(String material) =>
       _defaultTemps[material.toUpperCase()];
+
+  static double defaultDensityForMaterial(String material) =>
+      _defaultDensities[material.toUpperCase()] ?? 1.24;
 
   bool canAutoCreate(TagReadResult tag) {
     final s = tag.spool;
@@ -119,6 +132,7 @@ class SpoolCreator {
         return f.id;
       }
     }
+    // density wird aus Material-Tabelle abgeleitet; diameter bleibt 1.75 (Default)
     return spoolman.createFilament(
       baseUrl,
       vendorId: vendorId,
@@ -126,6 +140,7 @@ class SpoolCreator {
       material: material,
       colorHex: colorHex,
       extruderTemp: extruderTemp,
+      density: defaultDensityForMaterial(material),
     );
   }
 }

@@ -71,6 +71,8 @@ class SpoolmanService {
     required String material,
     required String colorHex,
     int? extruderTemp,
+    double diameter = 1.75,
+    double density = 1.24,
   }) async {
     final uri = Uri.parse('http://${_clean(baseUrl)}/api/v1/filament');
     final body = <String, dynamic>{
@@ -78,6 +80,8 @@ class SpoolmanService {
       'name': name,
       'material': material,
       'color_hex': colorHex,
+      'diameter': diameter,
+      'density': density,
       if (extruderTemp != null) 'settings_extruder_temp': extruderTemp,
     };
     final r = await client
