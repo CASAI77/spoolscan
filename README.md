@@ -8,6 +8,13 @@ and **consumption tracking** out of the box.
 
 **Available in English and German.**
 
+## Screenshots
+
+| Scan | Known spool | OpenPrintTag spool | Manual entry |
+|---|---|---|---|
+| ![Scan](screenshots/01-scan.jpg) | ![Detail Sunlu](screenshots/02-detail-known.jpg) | ![Detail Prusament](screenshots/03-detail-openprinttag.jpg) | ![Manual form](screenshots/04-form-manual.jpg) |
+| Tap a tag to scan | Live remaining weight from Spoolman | OpenPrintTag auto-registered | Manual entry for blank tags |
+
 ---
 
 ## Features
