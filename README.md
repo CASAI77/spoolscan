@@ -1,10 +1,14 @@
-# SpoolScan
+# SpoolScan 📡
 
-An Android app that scans NFC tags on filament spools and assigns them to a print
-slot (T0–T3) on the **Snapmaker U1** via Moonraker + Spoolman.
+> Free offline NFC spool scanner for the Snapmaker U1 — auto-registers spools in Spoolman, tracks usage via Moonraker.
 
-Now with **OpenPrintTag** support, **automatic spool registration** in Spoolman,
-and **consumption tracking** out of the box.
+[![release](https://img.shields.io/github/v/release/CASAI77/spoolscan?style=for-the-badge&label=release&color=brightgreen)](https://github.com/CASAI77/spoolscan/releases/latest)
+[![downloads](https://img.shields.io/github/downloads/CASAI77/spoolscan/total?style=for-the-badge&label=downloads&color=yellow)](https://github.com/CASAI77/spoolscan/releases)
+[![platform](https://img.shields.io/badge/platform-Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/CASAI77/spoolscan/releases/latest)
+[![price](https://img.shields.io/badge/price-Free-brightgreen?style=for-the-badge)](https://github.com/CASAI77/spoolscan/releases/latest)
+[![license](https://img.shields.io/github/license/CASAI77/spoolscan?style=for-the-badge&color=blue)](LICENSE)
+
+**SpoolScan** is a free **Android NFC scanner for filament spools** on the **Snapmaker U1**. Tap a spool with your phone, the app looks it up (or registers it) in [Spoolman](https://github.com/Donkie/Spoolman) and assigns it to a print slot via Moonraker. Reads **OpenPrintTag**, **OpenSpool** and **SpoolCompanion** tags. No subscription, no account, no cloud.
 
 **Available in English and German.**
 
