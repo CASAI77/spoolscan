@@ -67,17 +67,29 @@ class Spool {
     if (json['protocol'] != 'openspool') {
       throw FormatException('Kein OpenSpool-Format (protocol=${json['protocol']})');
     }
+    // spool_id ist OPTIONAL: SpoolPainter z.B. schreibt nur Filament-Daten
+    // ohne Spoolman-Referenz. Leerer spoolId → Resolver überspringt Stufe 1
+    // und geht direkt in den UID-/Anlage-Flow.
     final rawId = json['spool_id'];
-    if (rawId == null) throw FormatException('spool_id fehlt im Tag');
     return Spool(
-      spoolId: rawId.toString(),
+      spoolId: rawId?.toString() ?? '',
       brand: json['brand'] as String?,
       type: json['type'] as String?,
       colorHex: json['color_hex'] as String?,
-      minTemp: json['min_temp'] as int?,
-      maxTemp: json['max_temp'] as int?,
+      // Temperaturen tolerant lesen (SpoolPainter schreibt Strings, andere ints):
+      minTemp: _asInt(json['min_temp']),
+      maxTemp: _asInt(json['max_temp']),
       tagFormat: TagFormat.openSpool,
     );
+  }
+
+  /// Liest int oder int-als-String tolerant.
+  static int? _asInt(dynamic v) {
+    if (v == null) return null;
+    if (v is int) return v;
+    if (v is num) return v.toInt();
+    if (v is String) return int.tryParse(v.trim());
+    return null;
   }
 
   factory Spool._fromSpoolCompanion(String text) {

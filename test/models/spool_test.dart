@@ -41,11 +41,42 @@ void main() {
       expect(() => Spool.fromJson(json), throwsA(isA<FormatException>()));
     });
 
-    test('wirft FormatException wenn spool_id fehlt', () {
+    test('akzeptiert OpenSpool ohne spool_id (z.B. SpoolPainter), spoolId leer', () {
+      // SpoolPainter und ähnliche Apps schreiben OpenSpool-Format ohne
+      // Spoolman-Referenz. Der Resolver überspringt dann Stufe 1 und geht
+      // direkt in den UID-/Anlage-Flow.
       final json = {
         'protocol': 'openspool',
+        'brand': 'Generic',
+        'type': 'PLA',
+        'color_hex': 'ffaabb',
       };
-      expect(() => Spool.fromJson(json), throwsA(isA<FormatException>()));
+      final spool = Spool.fromJson(json);
+      expect(spool.spoolId, isEmpty);
+      expect(spool.brand, 'Generic');
+      expect(spool.type, 'PLA');
+      expect(spool.colorHex, 'ffaabb');
+    });
+
+    test('liest min_temp/max_temp tolerant — ints und Strings', () {
+      final jsonInt = {
+        'protocol': 'openspool',
+        'spool_id': '1',
+        'min_temp': 220,
+        'max_temp': 240,
+      };
+      expect(Spool.fromJson(jsonInt).minTemp, 220);
+      expect(Spool.fromJson(jsonInt).maxTemp, 240);
+
+      // SpoolPainter schreibt Strings:
+      final jsonStr = {
+        'protocol': 'openspool',
+        'spool_id': '1',
+        'min_temp': '220',
+        'max_temp': '240',
+      };
+      expect(Spool.fromJson(jsonStr).minTemp, 220);
+      expect(Spool.fromJson(jsonStr).maxTemp, 240);
     });
 
     test('optionale Felder dürfen null sein', () {
