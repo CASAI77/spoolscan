@@ -26,6 +26,8 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
   String? _errorMessage;
   bool _isStarting = false;
   bool _tagProcessing = false;
+  String _lastDebugPayload = '';
+  String _lastDebugFormat = '';
 
   @override
   void initState() {
@@ -107,13 +109,24 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
           // statt einen User-sichtbaren Fehler zu zeigen.
           try {
             final message = await ndef.read();
+            // Wir versuchen ALLE Records: zuerst Text-Records, dann
+            // (wenn keiner mit JSON-Inhalt) MIME-Records mit application/json
+            // oder text/plain — manche Apps schreiben anders als reine Text-Records.
+            String? textCandidate;
+            String? mimeCandidate;
             for (final record in message.records) {
               if (_isTextRecord(record)) {
                 final langLen = record.payload[0] & 0x3F;
-                textPayload = utf8.decode(record.payload.sublist(langLen + 1));
-                break;
+                textCandidate = utf8.decode(record.payload.sublist(langLen + 1));
+              } else if (record.typeNameFormat == NdefTypeNameFormat.media) {
+                // MIME-Type Record (z.B. application/json)
+                try {
+                  mimeCandidate = utf8.decode(record.payload);
+                } catch (_) {/* binary, skip */}
               }
             }
+            // Bevorzuge Text-Record, sonst MIME-Record
+            textPayload = textCandidate ?? mimeCandidate ?? '';
           } catch (_) {
             // textPayload bleibt '' → TagReader.parse liefert TagFormat.unknown
           }
@@ -121,6 +134,9 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
 
         // 2. TagReader: Format + Spool-Vorschlag
         final tagResult = TagReader.parse(nfcUid: nfcUid, textPayload: textPayload);
+        // Debug-Snapshot für die Anlage-Maske
+        _lastDebugPayload = textPayload;
+        _lastDebugFormat = tagResult.format.name;
 
         // 3. Resolver
         final settings = SettingsService();
@@ -219,6 +235,8 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
         prefillColorHex: tag.spool?.colorHex,
         prefillWeightTotal: tag.spool?.weightTotal,
         prefillExtruderTemp: tag.spool?.minTemp,
+        debugRawPayload: _lastDebugPayload,
+        debugTagFormat: _lastDebugFormat,
         onSave: (form) async {
           try {
             created = await creator.createManual(form);
