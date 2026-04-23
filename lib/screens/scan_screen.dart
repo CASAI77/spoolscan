@@ -26,8 +26,6 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
   String? _errorMessage;
   bool _isStarting = false;
   bool _tagProcessing = false;
-  String _lastDebugPayload = '';
-  String _lastDebugFormat = '';
 
   @override
   void initState() {
@@ -134,9 +132,6 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
 
         // 2. TagReader: Format + Spool-Vorschlag
         final tagResult = TagReader.parse(nfcUid: nfcUid, textPayload: textPayload);
-        // Debug-Snapshot für die Anlage-Maske
-        _lastDebugPayload = textPayload;
-        _lastDebugFormat = tagResult.format.name;
 
         // 3. Resolver
         final settings = SettingsService();
@@ -235,8 +230,6 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
         prefillColorHex: tag.spool?.colorHex,
         prefillWeightTotal: tag.spool?.weightTotal,
         prefillExtruderTemp: tag.spool?.minTemp,
-        debugRawPayload: _lastDebugPayload,
-        debugTagFormat: _lastDebugFormat,
         onSave: (form) async {
           try {
             created = await creator.createManual(form);

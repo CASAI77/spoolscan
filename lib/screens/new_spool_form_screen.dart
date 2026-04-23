@@ -11,8 +11,6 @@ class NewSpoolFormScreen extends StatefulWidget {
   final String? prefillColorHex;
   final int? prefillWeightTotal;
   final int? prefillExtruderTemp;
-  final String? debugRawPayload;
-  final String? debugTagFormat;
   final Future<void> Function(NewSpoolFormData) onSave;
   final VoidCallback onCancel;
 
@@ -26,8 +24,6 @@ class NewSpoolFormScreen extends StatefulWidget {
     this.prefillColorHex,
     this.prefillWeightTotal,
     this.prefillExtruderTemp,
-    this.debugRawPayload,
-    this.debugTagFormat,
     required this.onSave,
     required this.onCancel,
   });
@@ -143,31 +139,6 @@ class _NewSpoolFormScreenState extends State<NewSpoolFormScreen> {
                   ),
                 ),
               ]),
-            // === Debug-Block: zeigt was vom Tag tatsächlich gelesen wurde ===
-            // Hilft bei der Fehlersuche, wenn ein Tag-Format nicht erkannt wird.
-            const SizedBox(height: 24),
-            const Divider(),
-            Text('Tag-Diagnose',
-                style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey)),
-            const SizedBox(height: 4),
-            Text('NFC-UID: ${widget.nfcUid}',
-                style: const TextStyle(fontSize: 11, color: Colors.grey)),
-            if (widget.debugTagFormat != null)
-              Text('Erkanntes Format: ${widget.debugTagFormat}',
-                  style: const TextStyle(fontSize: 11, color: Colors.grey)),
-            const SizedBox(height: 4),
-            const Text('Roher Payload:',
-                style: TextStyle(fontSize: 11, color: Colors.grey)),
-            SelectableText(
-              widget.debugRawPayload?.isNotEmpty == true
-                  ? widget.debugRawPayload!
-                  : '(kein Text-Record gelesen)',
-              style: const TextStyle(
-                  fontSize: 10, fontFamily: 'monospace', color: Colors.white70),
-            ),
           ]),
         ),
       ),
