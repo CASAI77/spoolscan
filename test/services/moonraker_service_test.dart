@@ -38,8 +38,9 @@ void main() {
       )).captured;
 
       final body = jsonDecode(captured[1] as String);
-      expect(body['script'], contains('SET_ACTIVE_SPOOL'));
-      expect(body['script'], contains('3'));
+      // Verwendet die Snapmaker-U1 Custom-Macros (Davo1624 Setup):
+      expect(body['script'], contains('SET_CHANNEL_SPOOL CHANNEL=0 ID=3'));
+      expect(body['script'], contains('USE_CHANNEL CHANNEL=0'));
     });
 
     test('wirft MoonrakerException bei HTTP-Fehler', () async {

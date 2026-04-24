@@ -14,13 +14,23 @@ class MoonrakerService {
 
   MoonrakerService({http.Client? client}) : client = client ?? http.Client();
 
+  /// Weist eine Spule einem Snapmaker-U1-Slot (T0–T3) zu UND aktiviert sie
+  /// als aktive Rolle in Spoolman.
+  ///
+  /// Verwendet die Custom-Macros aus dem Davo1624/snapmaker-u1 Setup:
+  /// - SET_CHANNEL_SPOOL CHANNEL=<slot> ID=<id>  → Slot-Zuweisung
+  /// - USE_CHANNEL CHANNEL=<slot>                → Aktivierung
+  ///
+  /// Beide Befehle werden in einem einzigen GCode-Script gesendet,
+  /// damit Spoolman die "Aktive Rolle"-Anzeige korrekt aktualisiert.
   Future<void> setActiveSpool({
     required String printerIp,
     required String spoolId,
     required int slot,
   }) async {
     final uri = Uri.parse('http://$printerIp/printer/gcode/script');
-    final script = 'SET_ACTIVE_SPOOL ID=$spoolId';
+    final script =
+        'SET_CHANNEL_SPOOL CHANNEL=$slot ID=$spoolId\nUSE_CHANNEL CHANNEL=$slot';
 
     try {
       final response = await client
