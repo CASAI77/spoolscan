@@ -18,7 +18,7 @@ void main() {
       service = MoonrakerService(client: mockClient);
     });
 
-    test('sendet korrekten POST-Request an Moonraker', () async {
+    test('sendet drei separate POST-Requests an Moonraker', () async {
       when(mockClient.post(
         Uri.parse('http://192.168.1.179/printer/gcode/script'),
         headers: anyNamed('headers'),
@@ -31,20 +31,48 @@ void main() {
         slot: 0,
       );
 
+      // Drei einzelne Aufrufe — Multi-Line-Scripts werden von Klipper
+      // in manchen Setups anders verarbeitet (führte zu spurious
+      // "X is not valid for MACRO"-Fehlern).
       final captured = verify(mockClient.post(
         Uri.parse('http://192.168.1.179/printer/gcode/script'),
         headers: captureAnyNamed('headers'),
         body: captureAnyNamed('body'),
       )).captured;
 
-      final body = jsonDecode(captured[1] as String);
-      // Verwendet die Snapmaker-U1 Custom-Macros (Davo1624 Setup) +
-      // die Klipper-Variablen, die Spoolman selbst beim "Rolle wechseln"
-      // im Web setzt (sonst aktualisiert Spoolman die "Aktive Rolle" nicht):
-      expect(body['script'], contains('SET_CHANNEL_SPOOL CHANNEL=0 ID=3'));
-      expect(body['script'],
-          contains('SET_GCODE_VARIABLE MACRO=T0 VARIABLE=spool_id VALUE=3'));
-      expect(body['script'], contains('SAVE_VARIABLE VARIABLE=t0__spool_id VALUE=3'));
+      // captured enthält Paare [headers, body] für jeden Aufruf
+      expect(captured.length, 6); // 3 Aufrufe × 2 captured-Argumente
+      final scripts = <String>[];
+      for (var i = 1; i < captured.length; i += 2) {
+        scripts.add((jsonDecode(captured[i] as String) as Map)['script'] as String);
+      }
+
+      // Reihenfolge wie Spoolman selbst:
+      expect(scripts[0], 'SET_GCODE_VARIABLE MACRO=T0 VARIABLE=spool_id VALUE=3');
+      expect(scripts[1], 'SAVE_VARIABLE VARIABLE=t0__spool_id VALUE=3');
+      expect(scripts[2], 'SET_CHANNEL_SPOOL CHANNEL=0 ID=3');
+    });
+
+    test('extrahiert die Klipper-Fehlermeldung statt rohes JSON', () async {
+      when(mockClient.post(
+        any,
+        headers: anyNamed('headers'),
+        body: anyNamed('body'),
+      )).thenAnswer((_) async => http.Response(
+            '{"error":{"code":400,"message":"The value \'T3\' is not valid for MACRO","traceback":"..."}}',
+            400,
+          ));
+
+      try {
+        await service.setActiveSpool(
+            printerIp: 'p', spoolId: '7', slot: 3);
+        fail('expected MoonrakerException');
+      } on MoonrakerException catch (e) {
+        // Die freundliche Klipper-Message muss drinstehen, der lange
+        // Traceback nicht.
+        expect(e.message, contains("'T3' is not valid for MACRO"));
+        expect(e.message, isNot(contains('Traceback')));
+      }
     });
 
     test('wirft MoonrakerException bei HTTP-Fehler', () async {
