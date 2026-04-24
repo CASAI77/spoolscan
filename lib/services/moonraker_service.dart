@@ -14,23 +14,29 @@ class MoonrakerService {
 
   MoonrakerService({http.Client? client}) : client = client ?? http.Client();
 
-  /// Weist eine Spule einem Snapmaker-U1-Slot (T0–T3) zu UND aktiviert sie
+  /// Weist eine Spule einem Snapmaker-U1-Slot (T0–T3) zu UND markiert sie
   /// als aktive Rolle in Spoolman.
   ///
-  /// Verwendet die Custom-Macros aus dem Davo1624/snapmaker-u1 Setup:
-  /// - SET_CHANNEL_SPOOL CHANNEL=<slot> ID=<id>  → Slot-Zuweisung
-  /// - USE_CHANNEL CHANNEL=<slot>                → Aktivierung
-  ///
-  /// Beide Befehle werden in einem einzigen GCode-Script gesendet,
-  /// damit Spoolman die "Aktive Rolle"-Anzeige korrekt aktualisiert.
+  /// Sendet drei GCode-Befehle in einem einzigen Script:
+  /// 1. SET_CHANNEL_SPOOL CHANNEL=<slot> ID=<id>
+  ///    → setzt den Klipper-internen Channel-State (Davo1624 macro,
+  ///      wird beim Druck für Verbrauchstracking ausgewertet)
+  /// 2. SET_GCODE_VARIABLE MACRO=T<slot> VARIABLE=spool_id VALUE=<id>
+  ///    → setzt die GCode-Variable des Tool-Macros (was Spoolman selbst
+  ///      beim manuellen "Rolle wechseln" Klick im Web sendet)
+  /// 3. SAVE_VARIABLE VARIABLE=t<slot>__spool_id VALUE=<id>
+  ///    → persistiert die Zuweisung in Klippers variables.cfg, damit
+  ///      Spoolman die "Aktive Rolle"-Anzeige aktualisiert und der
+  ///      Zustand auch nach Neustart erhalten bleibt
   Future<void> setActiveSpool({
     required String printerIp,
     required String spoolId,
     required int slot,
   }) async {
     final uri = Uri.parse('http://$printerIp/printer/gcode/script');
-    final script =
-        'SET_CHANNEL_SPOOL CHANNEL=$slot ID=$spoolId\nUSE_CHANNEL CHANNEL=$slot';
+    final script = 'SET_CHANNEL_SPOOL CHANNEL=$slot ID=$spoolId\n'
+        'SET_GCODE_VARIABLE MACRO=T$slot VARIABLE=spool_id VALUE=$spoolId\n'
+        'SAVE_VARIABLE VARIABLE=t${slot}__spool_id VALUE=$spoolId';
 
     try {
       final response = await client

@@ -38,9 +38,13 @@ void main() {
       )).captured;
 
       final body = jsonDecode(captured[1] as String);
-      // Verwendet die Snapmaker-U1 Custom-Macros (Davo1624 Setup):
+      // Verwendet die Snapmaker-U1 Custom-Macros (Davo1624 Setup) +
+      // die Klipper-Variablen, die Spoolman selbst beim "Rolle wechseln"
+      // im Web setzt (sonst aktualisiert Spoolman die "Aktive Rolle" nicht):
       expect(body['script'], contains('SET_CHANNEL_SPOOL CHANNEL=0 ID=3'));
-      expect(body['script'], contains('USE_CHANNEL CHANNEL=0'));
+      expect(body['script'],
+          contains('SET_GCODE_VARIABLE MACRO=T0 VARIABLE=spool_id VALUE=3'));
+      expect(body['script'], contains('SAVE_VARIABLE VARIABLE=t0__spool_id VALUE=3'));
     });
 
     test('wirft MoonrakerException bei HTTP-Fehler', () async {
