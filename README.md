@@ -57,6 +57,31 @@
 - NFC tags on your spools (any of the three supported formats — or even blank
   NTAGs, which the app will register on first scan)
 
+### Snapmaker U1 firmware (important!)
+
+To make the spool / RFID workflow work end-to-end on the printer side, three
+things are required on the Snapmaker U1:
+
+1. **Snapmaker official firmware ≥ v1.2.0** — OpenRFID support was introduced
+   in the official v1.2.0 firmware. Older versions don't expose the RFID
+   subsystem the rest of this stack relies on.
+2. **[paxx12 SnapmakerU1-Extended-Firmware](https://github.com/paxx12/SnapmakerU1-Extended-Firmware)**
+   (e.g. release `v1.2.0-paxx12-14` or newer) — extended firmware built on
+   top of official v1.2.0 that adds full **OpenRFID** support
+   ([details](https://github.com/paxx12/SnapmakerU1-Extended-Firmware/releases)).
+   Without this firmware the RFID / multi-tool spool tracking on the printer
+   doesn't work, and SpoolScan's slot assignments won't be reflected in
+   Spoolman or counted during prints.
+3. **[Davo1624 snapmaker-u1 spoolman setup](https://github.com/Davo1624/snapmaker-u1)**
+   — Klipper macros that map the four tool slots (T0–T3) to Spoolman channels
+   (`SET_CHANNEL_SPOOL`, `t<slot>__spool_id` persistent variables, etc.).
+   Required for SpoolScan's per-slot assignment to register as the "Aktive Rolle"
+   in Spoolman.
+
+If you don't have these installed yet, install them on the printer first.
+SpoolScan itself will still launch without them, but slot assignment, "Aktive
+Rolle" updates and consumption tracking will not work.
+
 ## Installation
 
 1. Download the latest `app-release.apk` from the [Releases](../../releases) page
