@@ -3,7 +3,7 @@
 > Free offline NFC spool scanner for the Snapmaker U1 — auto-registers spools in Spoolman, tracks usage via Moonraker.
 
 [![release](https://img.shields.io/github/v/release/CASAI77/spoolscan?style=for-the-badge&label=release&color=brightgreen)](https://github.com/CASAI77/spoolscan/releases/latest)
-[![downloads](https://img.shields.io/github/downloads/CASAI77/spoolscan/total?style=for-the-badge&label=downloads&color=yellow)](https://github.com/CASAI77/spoolscan/releases)
+[![downloads](https://img.shields.io/github/downloads/CASAI77/spoolscan/latest/total?style=for-the-badge&label=downloads&color=yellow)](https://github.com/CASAI77/spoolscan/releases/latest)
 [![platform](https://img.shields.io/badge/platform-Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/CASAI77/spoolscan/releases/latest)
 [![price](https://img.shields.io/badge/price-Free-brightgreen?style=for-the-badge)](https://github.com/CASAI77/spoolscan/releases/latest)
 [![license](https://img.shields.io/github/license/CASAI77/spoolscan?style=for-the-badge&color=blue)](LICENSE)
